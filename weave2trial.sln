@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31605.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "weave2trial", "weave2trial\weave2trial.csproj", "{4E205200-CCB9-4D55-906D-4A8F5B549F87}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{84FB4BC3-1D1B-432B-97A4-107BFD957DF5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E205200-CCB9-4D55-906D-4A8F5B549F87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E205200-CCB9-4D55-906D-4A8F5B549F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E205200-CCB9-4D55-906D-4A8F5B549F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E205200-CCB9-4D55-906D-4A8F5B549F87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84FB4BC3-1D1B-432B-97A4-107BFD957DF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84FB4BC3-1D1B-432B-97A4-107BFD957DF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84FB4BC3-1D1B-432B-97A4-107BFD957DF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84FB4BC3-1D1B-432B-97A4-107BFD957DF5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B0CF7E50-0ADD-43B1-BA9E-D238F4C6170C}
+	EndGlobalSection
+EndGlobal
