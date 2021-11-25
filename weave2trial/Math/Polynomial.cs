@@ -6,82 +6,74 @@ using System.Text;
 
 namespace weave2trial
 {
-    class Polynomial
+    public class Polynomial
     {
-        private List<BigInteger> coeffs;
+        private readonly List<BigInteger> _coeffs;
 
-        public int Order => coeffs.Count - 1;
+        public int Order => _coeffs.Count - 1;
 
-        private static readonly BigInteger DefaultUpperBound = BigInteger.Pow(2, 2048);
+        private static readonly BigInteger DefaultUpperBound = BigInteger.Pow(2, Globals.SCALE_EXPONENT);
 
         public Polynomial(int ord, RandomNumberGenerator rng) : this(ord, rng, DefaultUpperBound) { }
 
-        public Polynomial(int ord, RandomNumberGenerator rng, BigInteger upperBound)
-        {
+        public Polynomial(int ord, RandomNumberGenerator rng, BigInteger upperBound) {
             if (ord < 0)
                 throw new ArgumentOutOfRangeException(nameof(ord), "Must be >= 0");
-            coeffs = new List<BigInteger>(ord + 1);
-            
+            _coeffs = new List<BigInteger>(ord + 1);
+
             for (var i = 0; i < ord + 1; i++)
-            {
-                coeffs.Add(rng.NextBigInteger(0, upperBound));
-            }
+                _coeffs.Add(rng.NextBigInteger(0, upperBound));
         }
 
-        public BigInteger Eval(BigInteger x)
-        {
+        public BigInteger Eval(BigInteger x) {
             var lx = BigInteger.One;
             var res = BigInteger.Zero;
-            for (var i = Order; i >= 0; i--)
-            {
-                res += coeffs[i] * lx;
+            for (var i = Order; i >= 0; i--) {
+                res += _coeffs[i] * lx;
                 lx *= x;
             }
+
             return res;
         }
 
-        private string _numToSuperscript(int p)
-        {
+        private static string NumToSuperscript(int p) {
             var res = new StringBuilder();
             const char minus = '⁻';
-            char[] nums = { '⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹' };
+            char[] nums = { '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹' };
             if (p < 0)
                 res.Append(minus);
             p = Math.Abs(p);
             var st = new Stack<char>();
-            while (p > 10)
-            {
+            while (p >= 10) {
                 var r = p % 10;
                 st.Push(nums[r]);
                 p /= 10;
             }
+
             res.Append(st.ToArray());
             res.Append(nums[p]);
             return res.ToString();
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             var sb = new StringBuilder();
-            for (var i = 0; i < coeffs.Count; i++)
-            {
-                sb.Append(coeffs[i]);
+            for (var i = 0; i < _coeffs.Count; i++) {
+                sb.Append(_coeffs[i]);
                 var p = Order - i;
-                if (p > 0)
-                {
+                if (p > 0) {
                     sb.Append('x');
                     if (p > 1)
-                        sb.Append(_numToSuperscript(p));
+                        sb.Append(NumToSuperscript(p));
                     sb.Append('+');
                 }
             }
+
             return sb.ToString();
         }
 
-        public BigInteger this[int i]
-        {
-            get => coeffs[i];
-            set => coeffs[i] = value;
+        public BigInteger this[int i] {
+            get => _coeffs[i];
+            set => _coeffs[i] = value;
         }
     }
 }

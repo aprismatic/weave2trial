@@ -2,43 +2,45 @@ using System;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
-using NUnit.Framework;
+using Xunit;
 using weave2trial;
 
-namespace tests
+namespace Tests
 {
     public class ShamirTests
     {
-        private static readonly RandomNumberGenerator rng = RandomNumberGenerator.Create();
-        private static readonly Random rnd = new();
+        private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
+        private static readonly Random Rnd = new();
 
-        [SetUp]
-        public void Setup()
-        {
+        [Fact(DisplayName = "SHAMIR: Simple")]
+        public void ShamirSecretSharingSimpleTest() {
+            var n = 6;
+            var t = 4;
+            var v = 10;
+            var sss = ShamirSecretSharing.CreateSecretSharing(v, n, t, Rng);
+            var rec = ShamirSecretSharing.RecoverSecret(sss.OrderBy(x => Rnd.Next()).Take(t));
+            Assert.Equal(new BigInteger(v), rec);
         }
 
-        [Test]
-        public void ShamirSecretSharingStressTest()
-        {
+        [Fact(DisplayName = "SHAMIR: Stress Test")]
+        public void ShamirSecretSharingStressTest() {
             var smallUpperBound = Int16.MaxValue;
-            for (var v = 0; v < smallUpperBound; v += rnd.Next(1,128))
-            {
-                var n = rnd.Next(3, 512);
-                var t = rnd.Next(3, n + 1);
-                var sss = ShamirSecretSharing.CreateSecretSharing(v, n, t, rng);
-                var rec = ShamirSecretSharing.RecoverSecret(sss.OrderBy(x => rnd.Next()).Take(t).ToList());
-                Assert.AreEqual(new BigInteger(v), rec);
+            for (var v = 0; v < smallUpperBound; v += Rnd.Next(1, 128)) {
+                var n = Rnd.Next(3, 512);
+                var t = Rnd.Next(3, n + 1);
+                var sss = ShamirSecretSharing.CreateSecretSharing(v, n, t, Rng);
+                var rec = ShamirSecretSharing.RecoverSecret(sss.OrderBy(x => Rnd.Next()).Take(t));
+                Assert.Equal(new BigInteger(v), rec);
             }
 
             var largeUpperBound = BigInteger.Pow(2, 2048);
-            for (var i = 0; i < 10; i++)
-            {
-                var v = rng.NextBigInteger(largeUpperBound);
-                var n = rnd.Next(3, 512);
-                var t = rnd.Next(3, n + 1);
-                var sss = ShamirSecretSharing.CreateSecretSharing(v, n, t, rng);
-                var rec = ShamirSecretSharing.RecoverSecret(sss.OrderBy(_ => rnd.Next()).Take(t).ToList());
-                Assert.AreEqual(v, rec);
+            for (var i = 0; i < 10; i++) {
+                var v = Rng.NextBigInteger(largeUpperBound);
+                var n = Rnd.Next(3, 512);
+                var t = Rnd.Next(3, n + 1);
+                var sss = ShamirSecretSharing.CreateSecretSharing(v, n, t, Rng);
+                var rec = ShamirSecretSharing.RecoverSecret(sss.OrderBy(_ => Rnd.Next()).Take(t));
+                Assert.Equal(v, rec);
             }
         }
     }

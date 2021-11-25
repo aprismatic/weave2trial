@@ -2,20 +2,21 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
+using Aprismatic;
 
 namespace weave2trial
 {
     public static class MyExtensions
     {
         /// <summary>
-        /// Returns a rng BigInteger that is within a specified range.
+        /// Returns a RNG BigInteger that is within a specified range.
         /// The lower bound is inclusive, and the upper bound is exclusive.
         /// </summary>
         public static BigInteger NextBigInteger(this RandomNumberGenerator rng, BigInteger minValue, BigInteger maxValue)
         {
             if (minValue > maxValue) throw new ArgumentException();
             if (minValue == maxValue) return minValue;
-            var zeroBasedUpperBound = maxValue - 1 - minValue; // Inclusive
+            var zeroBasedUpperBound = maxValue - BigInteger.One - minValue; // Inclusive
             Debug.Assert(zeroBasedUpperBound.Sign >= 0);
             var bytes = zeroBasedUpperBound.ToByteArray();
             Debug.Assert(bytes.Length > 0);
@@ -42,5 +43,35 @@ namespace weave2trial
             NextBigInteger(rng, BigInteger.Zero, maxValue);
         public static BigInteger NextBigInteger(this RandomNumberGenerator rng) =>
             NextBigInteger(rng, BigInteger.Zero, new BigInteger(Int32.MaxValue));
+
+        public static BigFraction NextBigFraction(this RandomNumberGenerator rng, BigFraction minValue, BigFraction maxValue) {
+            if (minValue > maxValue) throw new ArgumentException($"{nameof(minValue)} must be less or equal to {nameof(maxValue)}");
+            if (minValue == maxValue) return minValue;
+            var zeroBasedUpperBound = maxValue - minValue;
+            zeroBasedUpperBound.Simplify();
+            Debug.Assert(zeroBasedUpperBound.Sign > 0);
+
+            var normFactor = zeroBasedUpperBound.Denominator;
+            zeroBasedUpperBound *= normFactor;
+            zeroBasedUpperBound.Simplify();
+            Debug.Assert(zeroBasedUpperBound.Denominator == BigInteger.One);
+
+            var denom = rng.NextBigInteger(zeroBasedUpperBound.ToBigInteger());
+            zeroBasedUpperBound *= denom;
+            var numer = rng.NextBigInteger(zeroBasedUpperBound.ToBigInteger());
+
+            var res = new BigFraction(numer, denom);
+            res /= normFactor;
+            res.Simplify();
+            Debug.Assert(res >= minValue);
+            Debug.Assert(res <= maxValue);
+
+            return res;
+        }
+
+        public static BigFraction NextBigFraction(this RandomNumberGenerator rng, BigFraction maxValue) =>
+            NextBigFraction(rng, BigFraction.Zero, maxValue);
+        public static BigFraction NextBigFraction(this RandomNumberGenerator rng) =>
+            NextBigFraction(rng, BigFraction.Zero, new BigInteger(Int32.MaxValue));
     }
 }
