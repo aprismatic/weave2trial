@@ -10,10 +10,16 @@ namespace weave2trial
         public static IProtocol Create(Node owner, NodeIdentity initiator, UniqueProtocolIdentifier upi) {
             if (upi.ProtocolId == Poly2AdditiveProtocol.protocolId)
                 return Poly2AdditiveProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
+            if (upi.ProtocolId == Additive2PolyProtocol.protocolId)
+                return Additive2PolyProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
             if (upi.ProtocolId == LinearSecretSharingProtocol.protocolId)
                 return LinearSecretSharingProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
             if (upi.ProtocolId == ShamirSecretSharingProtocol.protocolId)
                 return ShamirSecretSharingProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
+            if (upi.ProtocolId == RequestSessionProtocol.protocolId)
+                return RequestSessionProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
+            if (upi.ProtocolId == PHEncryptProtocol.protocolId)
+                return PHEncryptProtocol.CreateInstance(owner, upi.ProtocolInstanceId, initiator, upi.ParentProtocol);
 
             Log.ErrorAndThrow($"Node {owner.NodeId} requested to create a protocol {upi.ProtocolId} which is unknown to IProtocolFactory");
             return null; // unreachable

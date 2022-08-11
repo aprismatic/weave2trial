@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using Aprismatic;
 
 namespace weave2trial
@@ -10,12 +11,8 @@ namespace weave2trial
         public static readonly string protocolId = "LinearSecretSharingProtocol";
         public override string ProtocolId => protocolId;
 
-        public Dictionary<NodeIdentity, bool> NodeAcks;
-        //public Result ProtocolResult;
-
         private LinearSecretSharingProtocol(Node owner, ProtocolInstanceIdentity instanceId, NodeIdentity initiator, UniqueProtocolIdentifier? parent) : base(owner, instanceId, initiator, parent) {
             State = new ListeningState(this);
-            NodeAcks = new();
         }
 
         public static LinearSecretSharingProtocol CreateInstance(Node owner, ProtocolInstanceIdentity instanceId, NodeIdentity initiator, UniqueProtocolIdentifier? parent) =>
@@ -75,12 +72,10 @@ namespace weave2trial
 
         public class AwaitingAcksState : IProtocolState
         {
-            //public readonly IReadOnlyList<NodeIdentity> Group;
             public readonly Result MyResult;
             public readonly Dictionary<NodeIdentity, bool> NodeAcks;
 
             public AwaitingAcksState(IProtocol parent, IReadOnlyList<NodeIdentity> group, Result myResult) : base(parent) {
-                //Group = group;
                 MyResult = myResult;
 
                 NodeAcks = new(group.Count);

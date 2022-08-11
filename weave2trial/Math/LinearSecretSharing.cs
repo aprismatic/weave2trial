@@ -41,7 +41,7 @@ namespace weave2trial
         }
 
         public static BigFraction RecoverSecret(IEnumerable<LinearShard> shards) {
-            return shards.Aggregate(BigFraction.Zero, (a, x) => a + x.S);
+            return shards.Aggregate(BigFraction.Zero, (a, x) => a + x.S).Simplify();
         }
     }
 }

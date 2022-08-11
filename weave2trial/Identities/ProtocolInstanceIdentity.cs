@@ -26,7 +26,15 @@ namespace weave2trial
             "Santiago", "Surat", "Madrid", "Suzhou", "Pune", "Harbin", "Houston", "Dallas", "Toronto", "Dar es Salaam",
             "Miami", "Belo Horizonte", "Singapore", "Philadelphia", "Atlanta", "Fukuoka", "Khartoum", "Barcelona",
             "Johannesburg", "Saint Petersburg", "Qingdao", "Dalian", "Washington", "Yangon", "Alexandria", "Jinan",
-            "Guadalajara"
+            "Guadalajara", "Aberdeen", "Armagh", "Bangor", "Bath", "Belfast", "Birmingham", "Bradford",
+            "Brighton & Hove", "Bristol", "Cambridge", "Canterbury", "Cardiff", "Carlisle", "Chelmsford", "Chester",
+            "Chichester", "Coventry", "Derby", "Derry", "Dundee", "Durham", "Edinburgh", "Ely", "Exeter", "Glasgow",
+            "Gloucester", "Hereford", "Inverness", "Kingston upon Hull", "Lancaster", "Leeds", "Leicester", "Lichfield",
+            "Lincoln", "Lisburn", "Liverpool", "Manchester", "Newcastle upon Tyne", "Newport", "Newry", "Norwich",
+            "Nottingham", "Oxford", "Perth", "Peterborough", "Plymouth", "Portsmouth", "Preston", "Ripon", "St Albans",
+            "St Asaph", "St Davids", "Salford", "Salisbury", "Sheffield", "Southampton", "Stirling", "Stoke-on-Trent",
+            "Sunderland", "Swansea", "Truro", "Wakefield", "Wells", "Westminster", "Winchester", "Wolverhampton",
+            "Worcester", "York"
         });
     }
 }

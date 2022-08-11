@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using Aprismatic;
 
 namespace weave2trial
 {
@@ -10,12 +11,8 @@ namespace weave2trial
         public static readonly string protocolId = "ShamirSecretSharingProtocol";
         public override string ProtocolId => protocolId;
 
-        public Dictionary<NodeIdentity, bool> NodeAcks;
-        //public Result ProtocolResult;
-
         private ShamirSecretSharingProtocol(Node owner, ProtocolInstanceIdentity instanceId, NodeIdentity initiator, UniqueProtocolIdentifier? parent) : base(owner, instanceId, initiator, parent) {
             State = new ListeningState(this);
-            NodeAcks = new();
         }
 
         public static ShamirSecretSharingProtocol CreateInstance(Node owner, ProtocolInstanceIdentity instanceId, NodeIdentity initiator, UniqueProtocolIdentifier? parent) =>
@@ -43,11 +40,11 @@ namespace weave2trial
     {
         public class InitiatorState : IProtocolState
         {
-            public readonly BigInteger Secret;
+            public readonly BigFraction Secret;
             public readonly int Threshold;
             public readonly IReadOnlyList<NodeIdentity> Group;
 
-            public InitiatorState(IProtocol parent, IEnumerable<NodeIdentity> group, int threshold, BigInteger secret) : base(parent) {
+            public InitiatorState(IProtocol parent, IEnumerable<NodeIdentity> group, int threshold,  BigFraction secret) : base(parent) {
                 Secret = secret;
                 Threshold = threshold;
                 
@@ -63,13 +60,6 @@ namespace weave2trial
                 var sss = ShamirSecretSharing.CreateSecretSharing(Secret, Group.Count, Threshold, Globals.RNG);
                 Debug.Assert(sss.Count == Group.Count);
                 
-                Log.Info(" ");
-                foreach(var shard in sss)
-                    Log.Info($"x: {shard.X} | y: {shard.Y}");
-                Log.Info(" ");
-                Log.Info($"Recovered secret: {ShamirSecretSharing.RecoverSecret(sss.Take(Threshold))}");
-                Log.Info(" ");
-
                 var nodesPairedWithSecretShares = Group.Zip(sss).ToList();
                 Result? myResult = null;
                 foreach (var (nodeid, shard) in nodesPairedWithSecretShares) {
@@ -86,12 +76,10 @@ namespace weave2trial
 
         public class AwaitingAcksState : IProtocolState
         {
-            //public readonly IReadOnlyList<NodeIdentity> Group;
             public readonly Result MyResult;
             public readonly Dictionary<NodeIdentity, bool> NodeAcks;
 
             public AwaitingAcksState(IProtocol parent, IReadOnlyList<NodeIdentity> group, Result myResult) : base(parent) {
-                //Group = group;
                 MyResult = myResult;
 
                 NodeAcks = new(group.Count);

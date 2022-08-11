@@ -9,9 +9,9 @@ namespace weave2trial
     public readonly struct ShamirShard
     {
         public readonly BigInteger X;
-        public readonly BigInteger Y;
+        public readonly BigFraction Y;
 
-        public ShamirShard(BigInteger x, BigInteger y)
+        public ShamirShard(BigInteger x, BigFraction y)
         {
             X = x;
             Y = y;
@@ -24,7 +24,7 @@ namespace weave2trial
 
     public static class ShamirSecretSharing
     {
-        public static List<ShamirShard> CreateSecretSharing(BigInteger value, int n, int t, RandomNumberGenerator rng) {
+        public static List<ShamirShard> CreateSecretSharing(BigFraction value, int n, int t, RandomNumberGenerator rng) {
             var res = new List<ShamirShard>();
 
             if (n < 2) throw new ArgumentOutOfRangeException(nameof(n), "Must be >= 2");
@@ -59,10 +59,11 @@ namespace weave2trial
             return new(num, div);
         }
 
-        public static BigFraction AdditiveElement(IList<BigInteger> Xs, int j, BigInteger Y) => LagrangianElement(Xs, j) * Y;
+        public static BigFraction AdditiveElement(IList<BigInteger> Xs, int j, BigFraction Y) => LagrangianElement(Xs, j) * Y;
 
-        public static BigInteger RecoverSecret(IEnumerable<ShamirShard> shards) {
-            List<BigInteger> Xs = new(), Ys = new();
+        public static BigFraction RecoverSecret(IEnumerable<ShamirShard> shards) {
+            List<BigInteger> Xs = new();
+            List<BigFraction> Ys = new();
 
             foreach (var s in shards) {
                 Xs.Add(s.X);
@@ -74,7 +75,7 @@ namespace weave2trial
             for (var j = 0; j < Xs.Count; j++)
                 res += AdditiveElement(Xs, j, Ys[j]);
 
-            return res.ToBigInteger();
+            return res.Simplify();
         }
     }
 }

@@ -14,6 +14,8 @@ namespace Tests.Protocols
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
         private static readonly Random Rnd = new();
 
+        public SSSProtocolTests() => Router.Registry.Clear();
+
         [Fact(DisplayName = "Shamir SS Protocol - Simple")]
         public void ShamirSecretSharingSimpleTest() {
             
@@ -36,7 +38,7 @@ namespace Tests.Protocols
             }
 
             var accum = new List<ShamirShard>();
-            foreach (var node in nodes.OrderBy(x => Globals.RND.Next()).Take(Globals.THRESHOLD)) {
+            foreach (var node in nodes.OrderBy(x => Random.Shared.Next()).Take(Globals.THRESHOLD)) {
                 if (node.ActiveProtocols[sssp.ProtocolInstanceId].State is SuccessState<ShamirSecretSharingProtocol.Result> ssbi) {
                     accum.Add(ssbi.Result.MyShare);
                     Log.Info($"{node}'s secret share is: {ssbi.Result.MyShare}");

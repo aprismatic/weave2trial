@@ -13,6 +13,8 @@ namespace Tests.Protocols
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
         private static readonly Random Rnd = new();
 
+        public LSSProtocolTests() => Router.Registry.Clear();
+
         [Fact(DisplayName = "Linear SS Protocol - Simple")]
         public void LinearSecretSharingSimpleTest() {
             var secret = new BigFraction(234567);
@@ -25,7 +27,7 @@ namespace Tests.Protocols
             var state = new LinearSecretSharingProtocol.InitiatorState(lssp, nodes.Select(x => x.NodeId), secret);
             nodes[0].ActivateProtocolWithState(state);
 
-            while (true) {
+            for (var i = 0; i < 10000; i++) {
                 Log.Info(" ");
                 foreach (var node in nodes)
                     node.Tick();

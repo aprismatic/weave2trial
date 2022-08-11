@@ -22,7 +22,7 @@ namespace Tests
             Assert.Equal(new BigInteger(v), rec);
         }
 
-        [Fact(DisplayName = "SHAMIR: Stress Test")]
+        [Fact(DisplayName = "SHAMIR: Stress Test", Skip = "Slow stress test")]
         public void ShamirSecretSharingStressTest() {
             var smallUpperBound = Int16.MaxValue;
             for (var v = 0; v < smallUpperBound; v += Rnd.Next(1, 128)) {

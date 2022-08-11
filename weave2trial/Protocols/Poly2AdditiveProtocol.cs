@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
+using System.Xml.Schema;
 using Aprismatic;
 
 namespace weave2trial
@@ -28,11 +30,11 @@ namespace weave2trial
     {
         public class InvitationMessage : IProtocolMessage
         {
-            public readonly List<NodeIdentity> Group; // group of this protocol _including_ the initiator node
+            public readonly IReadOnlyList<(NodeIdentity, BigInteger)> Group; // group of this protocol _including_ the initiator node
             public readonly UniqueProtocolIdentifier PolyProtocol; // which Shamir protocol's secret we are converting
 
-            public InvitationMessage(IProtocol sender, IEnumerable<NodeIdentity> group, UniqueProtocolIdentifier polyproto) : base(sender) {
-                Group = new List<NodeIdentity>(group);
+            public InvitationMessage(IProtocol sender, IEnumerable<(NodeIdentity, BigInteger)> group, UniqueProtocolIdentifier polyproto) : base(sender) {
+                Group = new List<(NodeIdentity, BigInteger)>(group);
                 PolyProtocol = polyproto;
             }
         }
@@ -43,40 +45,46 @@ namespace weave2trial
         public class InitiatorState : IProtocolState
         {
             public readonly ShamirSecretSharingProtocol.Result PolyResult;
-            public readonly IReadOnlyList<NodeIdentity> Group; // group of this protocol _including_ the initiator node
+            public readonly IReadOnlyList<(NodeIdentity, BigInteger)> Group; // group of this protocol _including_ the initiator node; accompanied by SSS X-value
 
-            public InitiatorState(IProtocol parent, UniqueProtocolIdentifier polyProtocol) : base(parent) {
+            public InitiatorState(IProtocol parent, UniqueProtocolIdentifier polyProtocol, IEnumerable<NodeIdentity> group) : base(parent) {
                 if (!Parent.Owner.ActiveProtocols.ContainsKey(polyProtocol.ProtocolInstanceId))
                     Log.ErrorAndThrow($"{Parent.Owner} does not have an active protocol with UPI {polyProtocol}");
 
-                if (Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId] is not ShamirSecretSharingProtocol)
-                    Log.ErrorAndThrow($"{Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId]} is not a Shamir Secret Sharing Protocol");
+                if (Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId] is not ShamirSecretSharingProtocol &&
+                    Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId] is not Additive2PolyProtocol)
+                    Log.ErrorAndThrow($"{Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId]} is not a Shamir Secret Sharing Protocol or an Additive2Poly Protocol");
 
                 if (Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId].State is not SuccessState<ShamirSecretSharingProtocol.Result>)
                     Log.ErrorAndThrow($"{Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId]} did not result in a Success State (maybe - yet)");
 
                 PolyResult = (Parent.Owner.ActiveProtocols[polyProtocol.ProtocolInstanceId].State as SuccessState<ShamirSecretSharingProtocol.Result>)!.Result; // null-forgiving '!': all checks are done above
 
-                Group = new List<NodeIdentity>(PolyResult.Group.OrderBy(x => x.Item2).Select(x => x.Item1));
+                var listOfNodesInGroup = group.Select(x => new NodeIdentity(x)).Concat(new[] { Parent.Owner.NodeId }).Distinct().ToList();
+                Group = PolyResult.Group.Where(x => listOfNodesInGroup.Contains(x.Item1)).ToList();
+
+                Debug.Assert(Group.Count >= PolyResult.Threshold);
+                Debug.Assert(Group.All(y => PolyResult.Group.Count(x => x.Item1 == y.Item1) == 1));
+                Debug.Assert(Group.All(y => PolyResult.Group.First(x => x.Item1 == y.Item1).Item2 == y.Item2));
                 Debug.Assert(Group.Count == Group.Distinct().Count());
-                Debug.Assert(Group.Contains(Parent.Owner.NodeId));
+                Debug.Assert(Group.Select(x=>x.Item1).Contains(Parent.Owner.NodeId));
             }
 
             public override IProtocolState Tick(IProtocolMessage? msg) {
                 if (msg != null) Log.Error($"{Parent} received an unexpected message {msg} in InitiatorState");
 
-                var indexOf = PolyResult.Group.FindIndex(x => x.Item1 == Parent.Owner.NodeId);
-                var additiveElement = ShamirSecretSharing.AdditiveElement(PolyResult.Group.Select(x => x.Item2).ToList(), indexOf, PolyResult.MyShare.Y);
+                var indexOf = Group.ToList().FindIndex(x => x.Item1 == Parent.Owner.NodeId);
+                var additiveElement = ShamirSecretSharing.AdditiveElement(Group.Select(x => x.Item2).ToList(), indexOf, PolyResult.MyShare.Y);
 
                 foreach (var node in Group)
-                    if (node != Parent.Owner.NodeId)
-                        Router.RouteMessage(node, new InvitationMessage(Parent, Group, PolyResult.Parent));
+                    if (node.Item1 != Parent.Owner.NodeId)
+                        Router.RouteMessage(node.Item1, new InvitationMessage(Parent, Group, PolyResult.Parent));
 
                 var lssp = LinearSecretSharingProtocol.CreateInstance(Parent.Owner, new ProtocolInstanceIdentity(), Parent.Owner.NodeId, Parent.UniqueProtocolId);
-                var state = new LinearSecretSharingProtocol.InitiatorState(lssp, Group, additiveElement);
+                var state = new LinearSecretSharingProtocol.InitiatorState(lssp, Group.Select(x => x.Item1), additiveElement);
                 Parent.Owner.ActivateProtocolWithState(state);
 
-                return new WaitingForLinearSecretSharesState(Parent, Group);
+                return new WaitingForLinearSecretSharesState(Parent, Group.Select(x=> x.Item1));
             }
         }
 
@@ -89,19 +97,21 @@ namespace weave2trial
                         Log.ErrorAndThrow($"Referred Shamir SS Protocol {ims.PolyProtocol} did not end up in a SuccessState");
                         throw new Exception(); // unreachable
                     }
-                    var polyResult = ss.Result;
-                    var indexOf = polyResult.Group.FindIndex(x => x.Item1 == Parent.Owner.NodeId);
-                    var additiveElement = ShamirSecretSharing.AdditiveElement(polyResult.Group.Select(x => x.Item2).ToList(), indexOf, polyResult.MyShare.Y);
 
-                    var Group = new List<NodeIdentity>(polyResult.Group.OrderBy(x => x.Item2).Select(x => x.Item1));
+                    var polyResult = ss.Result;
+                    var indexOf = ims.Group.ToList().FindIndex(x => x.Item1 == Parent.Owner.NodeId);
+                    var additiveElement = ShamirSecretSharing.AdditiveElement(ims.Group.Select(x => x.Item2).ToList(), indexOf, polyResult.MyShare.Y);
+
                     var lssp = LinearSecretSharingProtocol.CreateInstance(Parent.Owner, new ProtocolInstanceIdentity(), Parent.Owner.NodeId, Parent.UniqueProtocolId);
-                    var state = new LinearSecretSharingProtocol.InitiatorState(lssp, Group, additiveElement);
+                    var state = new LinearSecretSharingProtocol.InitiatorState(lssp, ims.Group.Select(x=> x.Item1), additiveElement);
                     Parent.Owner.ActivateProtocolWithState(state);
 
-                    return new WaitingForLinearSecretSharesState(Parent, Group);
+                    return new WaitingForLinearSecretSharesState(Parent, ims.Group.Select(x=> x.Item1));
                 }
 
-                if (msg != null) Log.Error($"{Parent} received an unexpected message {msg} in ListeningState");
+                if (msg != null)
+                    Log.Error($"{Parent} received an unexpected message {msg} in ListeningState");
+
                 return this;
             }
         }
@@ -132,24 +142,9 @@ namespace weave2trial
                     return this;
 
                 var linearshard = GroupShards.Values.Aggregate(new LinearShard(BigFraction.Zero), (a, x) => a + (LinearShard)x!); // shouldn't be null after the previous check
-                var res = new Result(GroupShards.Keys, linearshard, Parent.UniqueProtocolId);
-                return new SuccessState<Result>(Parent, res);
+                var res = new LinearSecretSharingProtocol.Result(GroupShards.Keys, linearshard, Parent.UniqueProtocolId);
+                return new SuccessState<LinearSecretSharingProtocol.Result>(Parent, res);
             }
-        }
-
-        public readonly struct Result
-        {
-            public readonly UniqueProtocolIdentifier Parent;
-            public readonly List<NodeIdentity> Group;
-            public readonly LinearShard MyShare;
-
-            public Result(IEnumerable<NodeIdentity> group, LinearShard myShare, UniqueProtocolIdentifier protoId) {
-                MyShare = myShare;
-                Group = new List<NodeIdentity>(group);
-                Parent = protoId;
-            }
-
-            public override string ToString() => $"[Group:{Group.Count} pax|Share:{MyShare}]";
         }
     }
 }

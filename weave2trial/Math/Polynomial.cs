@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using Aprismatic;
 
 namespace weave2trial
 {
     public class Polynomial
     {
-        private readonly List<BigInteger> _coeffs;
+        private readonly List<BigFraction> _coeffs;
 
         public int Order => _coeffs.Count - 1;
 
@@ -19,21 +20,21 @@ namespace weave2trial
         public Polynomial(int ord, RandomNumberGenerator rng, BigInteger upperBound) {
             if (ord < 0)
                 throw new ArgumentOutOfRangeException(nameof(ord), "Must be >= 0");
-            _coeffs = new List<BigInteger>(ord + 1);
+            _coeffs = new(ord + 1);
 
             for (var i = 0; i < ord + 1; i++)
                 _coeffs.Add(rng.NextBigInteger(0, upperBound));
         }
 
-        public BigInteger Eval(BigInteger x) {
-            var lx = BigInteger.One;
-            var res = BigInteger.Zero;
+        public BigFraction Eval(BigFraction x) {
+            var lx = BigFraction.One;
+            var res = BigFraction.Zero;
             for (var i = Order; i >= 0; i--) {
                 res += _coeffs[i] * lx;
                 lx *= x;
             }
 
-            return res;
+            return res.Simplify();
         }
 
         private static string NumToSuperscript(int p) {
@@ -71,7 +72,7 @@ namespace weave2trial
             return sb.ToString();
         }
 
-        public BigInteger this[int i] {
+        public BigFraction this[int i] {
             get => _coeffs[i];
             set => _coeffs[i] = value;
         }

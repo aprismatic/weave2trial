@@ -5,14 +5,15 @@ namespace weave2trial
     public class Node
     {
         public List<string> SupportedProtocols;
-        public readonly NodeIdentity NodeId = new();
+        public readonly NodeIdentity NodeId;
 
         public Dictionary<ProtocolInstanceIdentity, IProtocol> ActiveProtocols = new();
         private Dictionary<ProtocolInstanceIdentity, IProtocol> activationQueue = new();
 
-        public Node() {
+        public Node(string? name = null) {
+            NodeId = name == null ? new NodeIdentity() : new NodeIdentity(name);
             Log.Info($"Created node {this}");
-            SupportedProtocols = new() { Poly2AdditiveProtocol.protocolId, LinearSecretSharingProtocol.protocolId, ShamirSecretSharingProtocol.protocolId };
+            SupportedProtocols = new() { Poly2AdditiveProtocol.protocolId, Additive2PolyProtocol.protocolId, LinearSecretSharingProtocol.protocolId, ShamirSecretSharingProtocol.protocolId, RequestSessionProtocol.protocolId, PHEncryptProtocol.protocolId };
             Router.Register(this);
         }
 
@@ -26,7 +27,7 @@ namespace weave2trial
 
         public void ActivateProtocolWithState(IProtocolState state) {
             if (!SupportedProtocols.Contains(state.Parent.ProtocolId))
-                Log.ErrorAndThrow($"{this} can't activate with state an unsupported protocol");
+                Log.ErrorAndThrow($"{this} can't activate an unsupported protocol");
             if (ActiveProtocols.ContainsKey(state.Parent.ProtocolInstanceId))
                 Log.ErrorAndThrow($"{this} already has an active protocol {state.Parent}");
             

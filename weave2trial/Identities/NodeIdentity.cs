@@ -10,6 +10,14 @@ namespace weave2trial
             _id = _names.Dequeue();
         }
 
+        public NodeIdentity(string name) {
+            _id = name;
+        }
+
+        public NodeIdentity(NodeIdentity other) {
+            _id = other._id;
+        }
+
         public override string ToString() => _id;
         public override int GetHashCode() => _id.GetHashCode();
         public override bool Equals(object? obj) => obj is NodeIdentity niobj && _id.Equals(niobj._id);
